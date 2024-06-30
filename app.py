@@ -60,7 +60,7 @@ def fancyDraw(img, bbox, l=30, rt=1, t=7):
     return img
 
 
-@st.cache()
+@st.cache_data()
 def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     # initialize the dimensions of the image to be resized and
     # grab the image size
@@ -109,8 +109,8 @@ if app_mode == 'Run on Image':
         width: 400px;
     }
     [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-        width: 400px;
-        margin-left: -400px;
+        width: 350px;
+        margin-left: -350px;
     }
     </style>
     """,
@@ -199,8 +199,8 @@ elif app_mode == 'Run on Video':
         width: 400px;
     }
     [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-        width: 400px;
-        margin-left: -400px;
+        width: 300px;
+        margin-left: -300px;
     }
     </style>
     """,

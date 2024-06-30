@@ -119,8 +119,7 @@ if app_mode == 'Run on Image':
 elif app_mode == 'Run on Video':
     st.set_option('deprecation.showfileUploaderEncoding', False)
 
-    use_webcam = st.sidebar.button('Use Webcam')
-
+    use_webcam = st.sidebar.checkbox('Use Webcam')
     st.sidebar.markdown('---')
     st.markdown(
         """
@@ -162,7 +161,9 @@ elif app_mode == 'Run on Video':
     out = cv2.VideoWriter(output_filepath, codec, fps_input, (width, height))
 
     st.sidebar.text('Input Video')
-    st.sidebar.video(tfflie.name)
+    if not use_webcam:
+        st.sidebar.video(tfflie.name)
+    
     fps = 0
     i = 0
 

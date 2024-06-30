@@ -122,15 +122,21 @@ elif app_mode == 'Run on Video':
     st.markdown(' ## Output')
 
     stframe = st.empty()
-    video_file_buffer = st.sidebar.file_uploader("Upload a video", type=["mp4", "mov", 'avi', 'asf', 'm4v'])
-    tfflie = tempfile.NamedTemporaryFile(delete=False)
 
-    if not video_file_buffer:
-        vid = cv2.VideoCapture(DEMO_VIDEO)
-        tfflie.name = DEMO_VIDEO
+    use_webcam = st.sidebar.button('Use Webcam')
+
+    if use_webcam:
+        vid = cv2.VideoCapture(0)
     else:
-        tfflie.write(video_file_buffer.read())
-        vid = cv2.VideoCapture(tfflie.name)
+        video_file_buffer = st.sidebar.file_uploader("Upload a video", type=["mp4", "mov", 'avi', 'asf', 'm4v'])
+        tfflie = tempfile.NamedTemporaryFile(delete=False)
+
+        if not video_file_buffer:
+            vid = cv2.VideoCapture(DEMO_VIDEO)
+            tfflie.name = DEMO_VIDEO
+        else:
+            tfflie.write(video_file_buffer.read())
+            vid = cv2.VideoCapture(tfflie.name)
 
     width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -140,7 +146,8 @@ elif app_mode == 'Run on Video':
     output_filepath = 'output.mp4'
     out = cv2.VideoWriter(output_filepath, codec, fps_input, (width, height))
 
-    st.sidebar.text('Input Video')
+    if not use_webcam:
+        st.sidebar.text('Input Video')
 
     fps = 0
     i = 0
@@ -164,11 +171,14 @@ elif app_mode == 'Run on Video':
     with mp_face_detection.FaceDetection(min_detection_confidence=0.5) as face_detection:
         prevTime = 0
 
-        while vid.isOpened():
+        while True:
             i += 1
-            ret, frame = vid.read()
-            if not ret:
-                break
+            if use_webcam:
+                ret, frame = vid.read()
+            else:
+                ret, frame = vid.read()
+                if not ret:
+                    break
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame.flags.writeable = False
@@ -208,6 +218,10 @@ elif app_mode == 'Run on Video':
             stframe.image(frame, channels='BGR', use_column_width=True)
 
             out.write(frame)
+
+            if use_webcam:
+                if st.button('Stop Webcam'):
+                    break
 
     vid.release()
     out.release()

@@ -5,6 +5,7 @@ import numpy as np
 import tempfile
 import time
 from PIL import Image
+import os
 
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
@@ -13,18 +14,15 @@ DEMO_VIDEO = '1.mp4'
 DEMO_IMAGE = '1.png'
 
 st.title('Face Detection Application using MediaPipe and Streamlit')
-# <h3 style='text-align: center; color: red;'>{face_count}</h3>"
 
 st.markdown(
     """
     <style>
-    
-   
     [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 250px;
+        width: 350px;
     }
     [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-        width: 250px;
+        width: 350px;
         margin-left: -350px;
     }
     </style>
@@ -33,8 +31,6 @@ st.markdown(
 )
 
 st.sidebar.title('Face Detection Application using MediaPipe and Streamlit')
-# st.sidebar.subheader('Parameters')
-
 
 def fancyDraw(img, bbox, l=30, rt=1, t=7):
     x, y, w, h = bbox
@@ -59,78 +55,36 @@ def fancyDraw(img, bbox, l=30, rt=1, t=7):
 
     return img
 
-
 @st.cache_data()
 def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
-    # initialize the dimensions of the image to be resized and
-    # grab the image size
     dim = None
     (h, w) = image.shape[:2]
 
-    # if both the width and height are None, then return the
-    # original image
     if width is None and height is None:
         return image
 
-    # check to see if the width is None
     if width is None:
-        # calculate the ratio of the height and construct the
-        # dimensions
         r = height / float(h)
         dim = (int(w * r), height)
-
-    # otherwise, the height is None
     else:
-        # calculate the ratio of the width and construct the
-        # dimensions
         r = width / float(w)
         dim = (width, int(h * r))
 
-    # resize the image
     resized = cv2.resize(image, dim, interpolation=inter)
-
-    # return the resized image
     return resized
 
-
-app_mode = st.sidebar.selectbox('Choose the App mode',
-                                ['Run on Image', 'Run on Video']
-                                )
+app_mode = st.sidebar.selectbox('Choose the App mode', ['Run on Image', 'Run on Video'])
 
 if app_mode == 'Run on Image':
-    # drawing_spec = mp_drawing.DrawingSpec(thickness=2, circle_radius=1)
-
     st.sidebar.markdown('---')
-
-    st.markdown(
-        """
-    <style>
-    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 250px;
-    }
-    [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-        width: 350px;
-        margin-left: -250px;
-    }
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
     st.markdown("**Detected Faces**")
     kpi1_text = st.markdown("0")
     st.markdown('---')
 
-    # max_faces = st.sidebar.number_input('Maximum Number of Faces', value=2, min_value=1)
-    # st.sidebar.markdown('---')
-    # detection_confidence = st.sidebar.slider('Min Detection Confidence', min_value =0.0,max_value = 1.0,value = 0.5)
-    # st.sidebar.markdown('---')
-
-    img_file_buffer = st.sidebar.file_uploader(
-        "Upload an image", type=["jpg", "jpeg", 'png'])
+    img_file_buffer = st.sidebar.file_uploader("Upload an image", type=["jpg", "jpeg", 'png'])
 
     if img_file_buffer is not None:
         image = np.array(Image.open(img_file_buffer))
-
     else:
         demo_image = DEMO_IMAGE
         image = np.array(Image.open(demo_image))
@@ -138,30 +92,11 @@ if app_mode == 'Run on Image':
     st.sidebar.text('Original Image')
     st.sidebar.image(image)
     face_count = 0
-    # Dashboard
-    with mp_face_detection.FaceDetection(
-        # static_image_mode=True,
-        # max_num_faces=max_faces,
-            min_detection_confidence=0.5) as face_detection:
 
+    with mp_face_detection.FaceDetection(min_detection_confidence=0.5) as face_detection:
         results = face_detection.process(image)
-        # out_image = image.copy()
         bboxs = []
 
-        # for face_landmarks in results.multi_face_landmarks:
-        #     face_count += 1
-
-        #     #print('face_landmarks:', face_landmarks)
-
-        #     mp_drawing.draw_landmarks(
-        #     image=out_image,
-        #     landmark_list=face_landmarks,
-        #     connections=mp_face_detection.FACE_CONNECTIONS,
-        #     landmark_drawing_spec=drawing_spec,
-        #     connection_drawing_spec=drawing_spec)
-        #     kpi1_text.write(f"<h1 style='text-align: center; color: red;'>{face_count}</h1>", unsafe_allow_html=True)
-        # st.subheader('Output Image')
-        # st.image(out_image,use_column_width= True)
         if results.detections:
             for detection in results.detections:
                 bboxC = detection.location_data.relative_bounding_box
@@ -171,7 +106,6 @@ if app_mode == 'Run on Image':
 
                 bboxs.append([bbox, detection.score])
                 face_count += 1
-                # mp_drawing.draw_detection(image, detection)
                 image = fancyDraw(image, bbox)
 
                 cv2.putText(image, f'{int(detection.score[0]*100)}%',
@@ -182,43 +116,31 @@ if app_mode == 'Run on Image':
         st.subheader('Output Image')
         st.image(image, use_column_width=True)
 
-
 elif app_mode == 'Run on Video':
     st.set_option('deprecation.showfileUploaderEncoding', False)
 
     use_webcam = st.sidebar.button('Use Webcam')
-    # record = st.sidebar.checkbox("Record Video")
-    # if record:
-    #     st.checkbox("Recording", value=True)
 
     st.sidebar.markdown('---')
     st.markdown(
         """
     <style>
     [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 250px;
+        width: 400px;
     }
     [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
         width: 300px;
-        margin-left: -250px;
+        margin-left: -300px;
     }
     </style>
     """,
         unsafe_allow_html=True,
     )
-    # max faces
-    # max_faces = st.sidebar.number_input('Maximum Number of Faces', value=1, min_value=1)
-    # st.sidebar.markdown('---')
-    # detection_confidence = st.sidebar.slider('Min Detection Confidence', min_value =0.0,max_value = 1.0,value = 0.5)
-    # tracking_confidence = st.sidebar.slider('Min Tracking Confidence', min_value = 0.0,max_value = 1.0,value = 0.5)
-
-    # st.sidebar.markdown('---')
 
     st.markdown(' ## Output')
 
     stframe = st.empty()
-    video_file_buffer = st.sidebar.file_uploader(
-        "Upload a video", type=["mp4", "mov", 'avi', 'asf', 'm4v'])
+    video_file_buffer = st.sidebar.file_uploader("Upload a video", type=["mp4", "mov", 'avi', 'asf', 'm4v'])
     tfflie = tempfile.NamedTemporaryFile(delete=False)
 
     if not video_file_buffer:
@@ -227,7 +149,6 @@ elif app_mode == 'Run on Video':
         else:
             vid = cv2.VideoCapture(DEMO_VIDEO)
             tfflie.name = DEMO_VIDEO
-
     else:
         tfflie.write(video_file_buffer.read())
         vid = cv2.VideoCapture(tfflie.name)
@@ -236,16 +157,14 @@ elif app_mode == 'Run on Video':
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps_input = int(vid.get(cv2.CAP_PROP_FPS))
 
-    #codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
-    # codec = cv2.VideoWriter_fourcc('V', 'P', '0', '9')
-    codec=cv2.VideoWriter_fourcc(*'mpv4')
-    out = cv2.VideoWriter('output.mp4', codec, fps_input, (width, height))
+    codec = cv2.VideoWriter_fourcc(*'mpv4')
+    output_filepath = 'output.mp4'
+    out = cv2.VideoWriter(output_filepath, codec, fps_input, (width, height))
 
     st.sidebar.text('Input Video')
     st.sidebar.video(tfflie.name)
     fps = 0
     i = 0
-    # drawing_spec = mp_drawing.DrawingSpec(thickness=2, circle_radius=2)
 
     kpi1, kpi2, kpi3 = st.columns(3)
 
@@ -263,15 +182,14 @@ elif app_mode == 'Run on Video':
 
     st.markdown("<hr/>", unsafe_allow_html=True)
 
-    with mp_face_detection.FaceDetection(
-            min_detection_confidence=0.5) as face_detection:
+    with mp_face_detection.FaceDetection(min_detection_confidence=0.5) as face_detection:
         prevTime = 0
 
         while vid.isOpened():
             i += 1
             ret, frame = vid.read()
             if not ret:
-                continue
+                break
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame.flags.writeable = False
@@ -293,35 +211,31 @@ elif app_mode == 'Run on Video':
                     bboxs.append([bbox, detection.score])
 
                     face_count += 1
-                    image = fancyDraw(frame, bbox)
+                    frame = fancyDraw(frame, bbox)
 
-                    cv2.putText(image, f'{int(detection.score[0]*100)}%',
+                    cv2.putText(frame, f'{int(detection.score[0]*100)}%',
                                 (bbox[0], bbox[1]-20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
-                    # mp_drawing.draw_detection(frame, detection)
+
             currTime = time.time()
             fps = 1 / (currTime - prevTime)
             prevTime = currTime
-            # if record:
-                #st.checkbox("Recording", value=True)
-                # out.write(frame)
-        # Dashboard
-            kpi1_text.write(
-                f"<h2 style='text-align: center; color: red;'>{int(fps)}</h1>", unsafe_allow_html=True)
-            kpi2_text.write(
-                f"<h2 style='text-align: center; color: red;'>{face_count}</h1>", unsafe_allow_html=True)
-            kpi3_text.write(
-                f"<h2 style='text-align: center; color: red;'>{width}</h1>", unsafe_allow_html=True)
+
+            kpi1_text.write(f"<h2 style='text-align: center; color: red;'>{int(fps)}</h1>", unsafe_allow_html=True)
+            kpi2_text.write(f"<h2 style='text-align: center; color: red;'>{face_count}</h1>", unsafe_allow_html=True)
+            kpi3_text.write(f"<h2 style='text-align: center; color: red;'>{width}</h1>", unsafe_allow_html=True)
 
             frame = cv2.resize(frame, (0, 0), fx=0.8, fy=0.8)
             frame = image_resize(image=frame, width=640)
             stframe.image(frame, channels='BGR', use_column_width=True)
 
-    st.text('Video Processed')
-
-
-    output_video = open('output.mp4', 'rb')
-    out_bytes = output_video.read()
-    st.video(out_bytes)
+            out.write(frame)
 
     vid.release()
-    out. release()
+    out.release()
+
+    if os.path.exists(output_filepath):
+        output_video = open(output_filepath, 'rb')
+        out_bytes = output_video.read()
+        st.video(out_bytes)
+    else:
+        st.error("Error: The output video file was not found.")

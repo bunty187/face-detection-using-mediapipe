@@ -119,23 +119,6 @@ if app_mode == 'Run on Image':
 elif app_mode == 'Run on Video':
     st.set_option('deprecation.showfileUploaderEncoding', False)
 
-    use_webcam = st.sidebar.checkbox('Use Webcam')
-    st.sidebar.markdown('---')
-    st.markdown(
-        """
-    <style>
-    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 400px;
-    }
-    [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-        width: 300px;
-        margin-left: -300px;
-    }
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
-
     st.markdown(' ## Output')
 
     stframe = st.empty()
@@ -143,11 +126,8 @@ elif app_mode == 'Run on Video':
     tfflie = tempfile.NamedTemporaryFile(delete=False)
 
     if not video_file_buffer:
-        if use_webcam:
-            vid = cv2.VideoCapture(0)
-        else:
-            vid = cv2.VideoCapture(DEMO_VIDEO)
-            tfflie.name = DEMO_VIDEO
+        vid = cv2.VideoCapture(DEMO_VIDEO)
+        tfflie.name = DEMO_VIDEO
     else:
         tfflie.write(video_file_buffer.read())
         vid = cv2.VideoCapture(tfflie.name)
@@ -161,9 +141,7 @@ elif app_mode == 'Run on Video':
     out = cv2.VideoWriter(output_filepath, codec, fps_input, (width, height))
 
     st.sidebar.text('Input Video')
-    if not use_webcam:
-        st.sidebar.video(tfflie.name)
-    
+
     fps = 0
     i = 0
 

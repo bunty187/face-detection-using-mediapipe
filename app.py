@@ -21,10 +21,10 @@ st.markdown(
     
    
     [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 350px;
+        width: 250px;
     }
     [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-        width: 350px;
+        width: 250px;
         margin-left: -350px;
     }
     </style>
@@ -106,11 +106,11 @@ if app_mode == 'Run on Image':
         """
     <style>
     [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 400px;
+        width: 250px;
     }
     [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
         width: 350px;
-        margin-left: -350px;
+        margin-left: -250px;
     }
     </style>
     """,
@@ -196,11 +196,11 @@ elif app_mode == 'Run on Video':
         """
     <style>
     [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 400px;
+        width: 250px;
     }
     [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
         width: 300px;
-        margin-left: -300px;
+        margin-left: -250px;
     }
     </style>
     """,

@@ -169,29 +169,25 @@ elif app_mode == 'Run on Video':
                 break
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame.flags.writeable = False
             results = face_detection.process(frame)
 
-            frame.flags.writeable = True
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
             face_count = 0
-            bboxs = []
 
             if results.detections:
                 for detection in results.detections:
                     bboxC = detection.location_data.relative_bounding_box
-                    ih, iw, ic = frame.shape
+                    ih, iw, _ = frame.shape
                     bbox = int(bboxC.xmin * iw), int(bboxC.ymin * ih), \
                         int(bboxC.width * iw), int(bboxC.height * ih)
 
-                    bboxs.append([bbox, detection.score])
-
-                    face_count += 1
                     frame = fancyDraw(frame, bbox)
 
                     cv2.putText(frame, f'{int(detection.score[0]*100)}%',
                                 (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
+
+                    face_count += 1
 
             currTime = time.time()
             fps = 1 / (currTime - prevTime)
@@ -204,8 +200,6 @@ elif app_mode == 'Run on Video':
             frame = cv2.resize(frame, (0, 0), fx=0.8, fy=0.8)
             frame = image_resize(image=frame, width=640)
             stframe.image(frame, channels='BGR', use_column_width=True)
-
-    vid.release()
 
     # out.release()
 

@@ -34,24 +34,24 @@ st.sidebar.title('Face Detection Application using MediaPipe and Streamlit')
 
 def fancyDraw(img, bbox, l=30, rt=1, t=7):
     x, y, w, h = bbox
-    x1, y1 = x+w, y+h
+    x1, y1 = x + w, y + h
     cv2.rectangle(img, bbox, (255, 255, 0), rt)
 
-    # Top left x,y
-    cv2.line(img, (x, y), (x+l, y), (255, 255, 0), t)
-    cv2.line(img, (x, y), (x, y+l), (255, 255, 0), t)
+    # Top left x, y
+    cv2.line(img, (x, y), (x + l, y), (255, 255, 0), t)
+    cv2.line(img, (x, y), (x, y + l), (255, 255, 0), t)
 
-    # Top Right x1,y
-    cv2.line(img, (x1, y), (x1-l, y), (255, 255, 0), t)
-    cv2.line(img, (x1, y), (x1, y+l), (255, 255, 0), t)
+    # Top Right x1, y
+    cv2.line(img, (x1, y), (x1 - l, y), (255, 255, 0), t)
+    cv2.line(img, (x1, y), (x1, y + l), (255, 255, 0), t)
 
-    # Bottom Left x,y1
-    cv2.line(img, (x, y1), (x+l, y1), (255, 255, 0), t)
-    cv2.line(img, (x, y1), (x, y1-l), (255, 255, 0), t)
+    # Bottom Left x, y1
+    cv2.line(img, (x, y1), (x + l, y1), (255, 255, 0), t)
+    cv2.line(img, (x, y1), (x, y1 - l), (255, 255, 0), t)
 
-    # Bottom Right x1,y1
-    cv2.line(img, (x1, y1), (x1-l, y1), (255, 255, 0), t)
-    cv2.line(img, (x1, y1), (x1, y1-l), (255, 255, 0), t)
+    # Bottom Right x1, y1
+    cv2.line(img, (x1, y1), (x1 - l, y1), (255, 255, 0), t)
+    cv2.line(img, (x1, y1), (x1, y1 - l), (255, 255, 0), t)
 
     return img
 
@@ -67,7 +67,7 @@ def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
         r = height / float(h)
         dim = (int(w * r), height)
     else:
-        r = width / float(w)
+        r = width / float(h)
         dim = (width, int(h * r))
 
     resized = cv2.resize(image, dim, interpolation=inter)
@@ -109,7 +109,7 @@ if app_mode == 'Run on Image':
                 image = fancyDraw(image, bbox)
 
                 cv2.putText(image, f'{int(detection.score[0]*100)}%',
-                            (bbox[0], bbox[1]-20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
+                            (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
 
                 kpi1_text.write(
                     f"<h3 style='text-align: center; color: red;'>{face_count}</h3>", unsafe_allow_html=True)
@@ -127,6 +127,9 @@ elif app_mode == 'Run on Video':
 
     if use_webcam:
         vid = cv2.VideoCapture(0)
+        if not vid.isOpened():
+            st.error("Webcam could not be opened.")
+            st.stop()
     else:
         video_file_buffer = st.sidebar.file_uploader("Upload a video", type=["mp4", "mov", 'avi', 'asf', 'm4v'])
         tfflie = tempfile.NamedTemporaryFile(delete=False)
@@ -175,6 +178,9 @@ elif app_mode == 'Run on Video':
             i += 1
             if use_webcam:
                 ret, frame = vid.read()
+                if not ret:
+                    st.error("Failed to read frame from webcam.")
+                    break
             else:
                 ret, frame = vid.read()
                 if not ret:
@@ -203,15 +209,15 @@ elif app_mode == 'Run on Video':
                     frame = fancyDraw(frame, bbox)
 
                     cv2.putText(frame, f'{int(detection.score[0]*100)}%',
-                                (bbox[0], bbox[1]-20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
+                                (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
 
             currTime = time.time()
             fps = 1 / (currTime - prevTime)
             prevTime = currTime
 
-            kpi1_text.write(f"<h2 style='text-align: center; color: red;'>{int(fps)}</h1>", unsafe_allow_html=True)
-            kpi2_text.write(f"<h2 style='text-align: center; color: red;'>{face_count}</h1>", unsafe_allow_html=True)
-            kpi3_text.write(f"<h2 style='text-align: center; color: red;'>{width}</h1>", unsafe_allow_html=True)
+            kpi1_text.write(f"<h2 style='text-align: center; color: red;'>{int(fps)}</h2>", unsafe_allow_html=True)
+            kpi2_text.write(f"<h2 style='text-align: center; color: red;'>{face_count}</h2>", unsafe_allow_html=True)
+            kpi3_text.write(f"<h2 style='text-align: center; color: red;'>{width}</h2>", unsafe_allow_html=True)
 
             frame = cv2.resize(frame, (0, 0), fx=0.8, fy=0.8)
             frame = image_resize(image=frame, width=640)

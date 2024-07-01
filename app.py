@@ -138,10 +138,6 @@ elif app_mode == 'Run on Video':
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps_input = int(vid.get(cv2.CAP_PROP_FPS))
 
-    codec = cv2.VideoWriter_fourcc(*'mpv4')
-    output_filepath = 'output.mp4'
-    out = cv2.VideoWriter(output_filepath, codec, fps_input, (width, height))
-
     st.sidebar.text('Input Video')
 
     fps = 0
@@ -209,10 +205,9 @@ elif app_mode == 'Run on Video':
             frame = image_resize(image=frame, width=640)
             stframe.image(frame, channels='BGR', use_column_width=True)
 
-            out.write(frame)
-
     vid.release()
-    out.release()
+
+    # out.release()
 
     if os.path.exists(output_filepath):
         output_video = open(output_filepath, 'rb')

@@ -138,6 +138,10 @@ elif app_mode == 'Run on Video':
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps_input = int(vid.get(cv2.CAP_PROP_FPS))
 
+    codec = cv2.VideoWriter_fourcc(*'mpv4')
+    output_filepath = 'output.mp4'
+    out = cv2.VideoWriter(output_filepath, codec, fps_input, (width, height))
+
     st.sidebar.text('Input Video')
 
     fps = 0
@@ -169,25 +173,29 @@ elif app_mode == 'Run on Video':
                 break
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame.flags.writeable = False
             results = face_detection.process(frame)
 
+            frame.flags.writeable = True
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
             face_count = 0
+            bboxs = []
 
             if results.detections:
                 for detection in results.detections:
                     bboxC = detection.location_data.relative_bounding_box
-                    ih, iw, _ = frame.shape
+                    ih, iw, ic = frame.shape
                     bbox = int(bboxC.xmin * iw), int(bboxC.ymin * ih), \
                         int(bboxC.width * iw), int(bboxC.height * ih)
 
+                    bboxs.append([bbox, detection.score])
+
+                    face_count += 1
                     frame = fancyDraw(frame, bbox)
 
                     cv2.putText(frame, f'{int(detection.score[0]*100)}%',
                                 (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
-
-                    face_count += 1
 
             currTime = time.time()
             fps = 1 / (currTime - prevTime)
@@ -201,7 +209,10 @@ elif app_mode == 'Run on Video':
             frame = image_resize(image=frame, width=640)
             stframe.image(frame, channels='BGR', use_column_width=True)
 
-    # out.release()
+            out.write(frame)
+
+    vid.release()
+    out.release()
 
     if os.path.exists(output_filepath):
         output_video = open(output_filepath, 'rb')

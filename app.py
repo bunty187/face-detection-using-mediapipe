@@ -218,8 +218,8 @@ elif app_mode == 'Run on Video':
         output_video = open(output_filepath, 'rb')
         out_bytes = output_video.read()
         st.video(out_bytes)
-    else:
-        st.error("Error: The output video file was not found.")
+    # else:
+        # st.error("Error: The output video file was not found.")
 
 elif app_mode == 'Run on Webcam':
     class VideoTransformer(VideoTransformerBase):

@@ -223,24 +223,24 @@ elif app_mode == 'Run on Video':
 
 elif app_mode == 'Run on Webcam':
     class VideoTransformer(VideoTransformerBase):
-        def __init__(self):
-            self.face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
+    def __init__(self):
+        self.face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
 
-        def transform(self, frame):
-            img = frame.to_ndarray(format="bgr24")
+    def transform(self, frame):
+        img = cv2.cvtColor(frame.to_ndarray(format="bgr24"), cv2.COLOR_BGR2RGB)
 
-            results = self.face_detection.process(img)
-            if results.detections:
-                for detection in results.detections:
-                    bboxC = detection.location_data.relative_bounding_box
-                    ih, iw, _ = img.shape
-                    bbox = int(bboxC.xmin * iw), int(bboxC.ymin * ih), \
-                        int(bboxC.width * iw), int(bboxC.height * ih)
+        results = self.face_detection.process(img)
+        if results.detections:
+            for detection in results.detections:
+                bboxC = detection.location_data.relative_bounding_box
+                ih, iw, _ = img.shape
+                bbox = int(bboxC.xmin * iw), int(bboxC.ymin * ih), \
+                    int(bboxC.width * iw), int(bboxC.height * ih)
 
-                    img = fancyDraw(img, bbox)
-                    cv2.putText(img, f'{int(detection.score[0]*100)}%',
-                                (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
+                img = fancyDraw(img, bbox)
+                cv2.putText(img, f'{int(detection.score[0]*100)}%',
+                            (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
 
-            return img
+        return img
 
     webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)

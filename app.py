@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 import mediapipe as mp
 import cv2
 import numpy as np
@@ -73,7 +74,7 @@ def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     resized = cv2.resize(image, dim, interpolation=inter)
     return resized
 
-app_mode = st.sidebar.selectbox('Choose the App mode', ['Run on Image', 'Run on Video'])
+app_mode = st.sidebar.selectbox('Choose the App mode', ['Run on Image', 'Run on Video', 'Run on Webcam'])
 
 if app_mode == 'Run on Image':
     st.sidebar.markdown('---')
@@ -123,23 +124,15 @@ elif app_mode == 'Run on Video':
 
     stframe = st.empty()
 
-    use_webcam = st.sidebar.button('Use Webcam')
+    video_file_buffer = st.sidebar.file_uploader("Upload a video", type=["mp4", "mov", 'avi', 'asf', 'm4v'])
+    tfflie = tempfile.NamedTemporaryFile(delete=False)
 
-    if use_webcam:
-        vid = cv2.VideoCapture(0)
-        if not vid.isOpened():
-            st.error("Webcam could not be opened.")
-            st.stop()
+    if not video_file_buffer:
+        vid = cv2.VideoCapture(DEMO_VIDEO)
+        tfflie.name = DEMO_VIDEO
     else:
-        video_file_buffer = st.sidebar.file_uploader("Upload a video", type=["mp4", "mov", 'avi', 'asf', 'm4v'])
-        tfflie = tempfile.NamedTemporaryFile(delete=False)
-
-        if not video_file_buffer:
-            vid = cv2.VideoCapture(DEMO_VIDEO)
-            tfflie.name = DEMO_VIDEO
-        else:
-            tfflie.write(video_file_buffer.read())
-            vid = cv2.VideoCapture(tfflie.name)
+        tfflie.write(video_file_buffer.read())
+        vid = cv2.VideoCapture(tfflie.name)
 
     width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -149,8 +142,7 @@ elif app_mode == 'Run on Video':
     output_filepath = 'output.mp4'
     out = cv2.VideoWriter(output_filepath, codec, fps_input, (width, height))
 
-    if not use_webcam:
-        st.sidebar.text('Input Video')
+    st.sidebar.text('Input Video')
 
     fps = 0
     i = 0
@@ -176,15 +168,9 @@ elif app_mode == 'Run on Video':
 
         while True:
             i += 1
-            if use_webcam:
-                ret, frame = vid.read()
-                if not ret:
-                    st.error("Failed to read frame from webcam.")
-                    break
-            else:
-                ret, frame = vid.read()
-                if not ret:
-                    break
+            ret, frame = vid.read()
+            if not ret:
+                break
 
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame.flags.writeable = False
@@ -225,10 +211,6 @@ elif app_mode == 'Run on Video':
 
             out.write(frame)
 
-            if use_webcam:
-                if st.button('Stop Webcam'):
-                    break
-
     vid.release()
     out.release()
 
@@ -238,3 +220,27 @@ elif app_mode == 'Run on Video':
         st.video(out_bytes)
     else:
         st.error("Error: The output video file was not found.")
+
+elif app_mode == 'Run on Webcam':
+    class VideoTransformer(VideoTransformerBase):
+        def __init__(self):
+            self.face_detection = mp_face_detection.FaceDetection(min_detection_confidence=0.5)
+
+        def transform(self, frame):
+            img = frame.to_ndarray(format="bgr24")
+
+            results = self.face_detection.process(img)
+            if results.detections:
+                for detection in results.detections:
+                    bboxC = detection.location_data.relative_bounding_box
+                    ih, iw, _ = img.shape
+                    bbox = int(bboxC.xmin * iw), int(bboxC.ymin * ih), \
+                        int(bboxC.width * iw), int(bboxC.height * ih)
+
+                    img = fancyDraw(img, bbox)
+                    cv2.putText(img, f'{int(detection.score[0]*100)}%',
+                                (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 0), 2)
+
+            return img
+
+    webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
